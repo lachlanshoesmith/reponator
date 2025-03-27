@@ -48,7 +48,6 @@ try:
         reader = csv.reader(f)
         headings = next(reader)
         for row in list(reader):
-            # check if data already has key headings[0]
             if data.get(row[0]) is None:
                 try:
                     data[row[0]] = {
