@@ -87,7 +87,7 @@ for team, members in data.items():
     if res.status_code == 201:
         print('🌟 Created ' + repo_name)
     else:
-        print('🛑 Failed to create' + repo_name)
+        print('🛑 Failed to create ' + repo_name)
         print(res.json())
 
     for lead in members['Leads']:
