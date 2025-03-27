@@ -74,7 +74,7 @@ if to_continue.lower() != 'y':
 
 for team, members in data.items():
     if 'skip' in members:
-        print(f'🏃‍➡️ Skipping {team}...')
+        print(f'🏃‍➡️ Skipping {team}...\n')
         continue
 
     repo_name = REPOSITORY_PREFIX + team.lower() + REPOSITORY_SUFFIX
@@ -106,3 +106,4 @@ for team, members in data.items():
 
         if res.status_code in [201, 204]:
             print(f'✅ Added {trainee} with push access')
+    print()
