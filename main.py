@@ -2,7 +2,27 @@
 import csv
 import sys
 import os
-import subprocess
+import requests as re
+
+GITHUB_TOKEN = ""
+GITHUB_ORGANISATION = ""
+REPOSITORY_PREFIX = ""
+
+ORGANISATION_REPOS = f"https://api.github.com/orgs/{GITHUB_ORGANISATION}/repos"
+HEADERS = {
+    "Accept": "application/vnd.github+json",
+    "Authorization": f"Bearer {GITHUB_TOKEN}",
+    "X-GitHub-Api-Version": "2022-11-28"
+}
+
+repo_options_base = {
+    "description": "25T1 Training Program project",
+    "homepage": "",
+    "private": False,
+    "has_issues": True,
+    "has_projects": True,
+    "has_wiki": True
+}
 
 
 def usage():
@@ -39,3 +59,21 @@ try:
 except FileNotFoundError:
     sys.exit(
         f'"{filename}" does not exist.\n' + usage())
+
+to_continue = input('Ready to create repositories. Continue (y)? ')
+if to_continue.lower() != 'y':
+    sys.exit()
+
+for team, members in data.items():
+    repo_name = REPOSITORY_PREFIX + team.lower()
+    repo_options = repo_options_base
+    repo_options.name = repo_name
+
+    res = re.post(ORGANISATION_REPOS, headers=HEADERS,
+                  json=repo_options, timeout=10)
+
+    if res.status_code == 201:
+        print('🌟 Created' + repo_name)
+    else:
+        print('🛑 Failed to create' + repo_name)
+        print(res.json())
