@@ -15,22 +15,24 @@ REPO_OPTIONS_BASE = {
 
 
 def usage():
-    return f'Usage: {os.path.basename(__file__)} <filename> <github_token> <github_organisation> [repository_prefix] [repository_suffix]'
+    return f'Usage: {os.path.basename(__file__)} <filename> <github_token> <github_organisation> [repository_prefix] [repository_suffix] [list,of,universal,admins]'
+
+
+def add_collaborator(collaborator, permission):
+    collab_url = f"https://api.github.com/repos/{github_organisation}/{repo_name}/collaborators/{collaborator}"
+    collab_res = re.put(collab_url, headers=headers, json={
+        "permission": permission}, timeout=10)
+    if collab_res.status_code in [201, 204]:
+        print(f'✅ Added {collaborator} with {permission} access')
 
 
 try:
     filename = sys.argv[1]
     github_token = sys.argv[2]
     github_organisation = sys.argv[3]
-    if len(sys.argv) >= 5:
-        REPOSITORY_PREFIX = sys.argv[4]
-        if len(sys.argv) == 6:
-            REPOSITORY_SUFFIX = sys.argv[5]
-        else:
-            REPOSITORY_SUFFIX = ''
-    else:
-        REPOSITORY_PREFIX = ''
-        REPOSITORY_SUFFIX = ''
+    repository_prefix = sys.argv[4] if len(sys.argv) >= 5 else ''
+    repository_suffix = sys.argv[5] if len(sys.argv) >= 6 else ''
+    universal_admins = sys.argv[6].split(',') if len(sys.argv) >= 7 else []
 
 except IndexError:
     sys.exit(usage())
@@ -77,7 +79,7 @@ for team, members in data.items():
         print(f'🏃‍➡️ Skipping {team}...\n')
         continue
 
-    repo_name = REPOSITORY_PREFIX + team.lower() + REPOSITORY_SUFFIX
+    repo_name = repository_prefix + team.lower() + repository_suffix
     repo_options = REPO_OPTIONS_BASE
     repo_options['name'] = repo_name
 
@@ -90,20 +92,13 @@ for team, members in data.items():
         print('🛑 Failed to create ' + repo_name)
         print(res.json())
 
-    for lead in members['Leads']:
-        collab_url = f"https://api.github.com/repos/{github_organisation}/{repo_name}/collaborators/{lead}"
-        res = re.put(collab_url, headers=headers,
-                     json={"permission": "admin"}, timeout=10)
+    for admin in universal_admins:
+        add_collaborator(admin, "admin")
 
-        if res.status_code in [201, 204]:
-            print(f'✅ Added {lead} with admin access')
+    for lead in members['Leads']:
+        add_collaborator(lead, "admin")
 
     for trainee in members['Trainees']:
-        collab_url = f"https://api.github.com/repos/{github_organisation}/{repo_name}/collaborators/{trainee}"
+        add_collaborator(trainee, "push")
 
-        res = re.put(collab_url, headers=headers,
-                     json={"permission": "push"}, timeout=10)
-
-        if res.status_code in [201, 204]:
-            print(f'✅ Added {trainee} with push access')
     print()
